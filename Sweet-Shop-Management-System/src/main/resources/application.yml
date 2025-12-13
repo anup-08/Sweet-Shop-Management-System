@@ -1,0 +1,18 @@
+spring :
+  application :
+   name: Sweet-Shop-Management-System
+
+  datasource:
+     url: ${url}
+     username: ${userName}
+     password: ${password}
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernates:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+server:
+  port: 8080
