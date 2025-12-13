@@ -9,17 +9,18 @@ import java.util.UUID;
 
 @AllArgsConstructor
 @Service
-@Transactional
+
 public class RefreshService {
     private final RefreshRepo repo;
 
+    @Transactional
     public String generateRefreshToken(Long userId) {
         repo.deleteByUserId(userId);
 
         String rToken = UUID.randomUUID().toString();
 
         RefreshToken refreshToken = new RefreshToken();
-        refreshToken.setId(userId);
+        refreshToken.setUserId(userId);
         refreshToken.setRToken(rToken);
         refreshToken.setExpireTime(new Date(System.currentTimeMillis() + 5 * 24 * 60 * 60 * 1000));
 
