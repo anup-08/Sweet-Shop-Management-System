@@ -4,7 +4,10 @@ import com.SweetShopManagementSystem.Enum.Role;
 import com.SweetShopManagementSystem.dtos.UserRequestDTO;
 import com.SweetShopManagementSystem.dtos.UserResponseDTO;
 import com.SweetShopManagementSystem.exception.NotFound;
+import com.SweetShopManagementSystem.jwt.JwtUtility;
 import com.SweetShopManagementSystem.model.User;
+import com.SweetShopManagementSystem.refreshToken.RefreshService;
+import com.SweetShopManagementSystem.refreshToken.RefreshToken;
 import com.SweetShopManagementSystem.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -18,6 +21,8 @@ public class UserService {
 
     private final UserRepository userRepo;
     private final PasswordEncoder passwordEncoder;
+    private final JwtUtility jwtUtility;
+    private final RefreshService refreshService;
 
     public UserResponseDTO registerUser(UserRequestDTO dto) {
 
@@ -61,13 +66,28 @@ public class UserService {
         userRepo.delete(user);
     }
 
-
     private UserResponseDTO mapToResponse(User user) {
         UserResponseDTO dto = new UserResponseDTO();
         dto.setId(user.getId());
         dto.setUsername(user.getUsername());
         dto.setRole(user.getRole().name());
         return dto;
+    }
+
+    public String generateToken(String userName){
+        User user = userRepo.findByUsername(userName).orElseThrow(()->new NotFound("User Doesn't Exist"));
+        return jwtUtility.generateToken(userName , List.of(user.getRole().toString()));
+    }
+
+    public String generateRefreshToken(String userName){
+        User user = userRepo.findByUsername(userName).orElseThrow(()->new NotFound("User Doesn't Exist"));
+        return refreshService.generateRefreshToken(user.getId());
+    }
+
+    public String generateTokenFromRefreshToken(String rToken){
+        RefreshToken refreshToken = refreshService.validate(rToken);
+        User user = userRepo.findById(refreshToken.getUserId()).get();
+        return jwtUtility.generateToken(user.getUsername() , List.of(user.getRole().toString()));
     }
 
 
