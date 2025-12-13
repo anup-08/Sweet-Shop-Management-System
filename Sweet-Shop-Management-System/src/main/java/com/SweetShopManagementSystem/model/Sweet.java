@@ -21,7 +21,7 @@ public class Sweet {
 
     private Double price;
 
-    private String desc;
+    private String description;
 
     private Integer quantity;
 }

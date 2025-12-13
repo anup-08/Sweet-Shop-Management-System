@@ -1,6 +1,7 @@
 package com.SweetShopManagementSystem.dtos;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
@@ -9,7 +10,10 @@ import lombok.Setter;
 @Setter
 public class UserRequestDTO {
     @NotBlank(message = "Username is required")
-    @Size(min = 3, max = 50, message = "Username must be between 3 and 50 characters")
+    @Pattern(
+            regexp = "^[a-zA-Z][a-zA-Z0-9_]*$",
+            message = "Username must start with a letter and contain only letters, numbers, and underscore"
+    )
     private String username;
 
     @NotBlank(message = "Password is required")

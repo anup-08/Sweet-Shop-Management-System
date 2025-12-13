@@ -20,7 +20,7 @@ public class SweetService {
         Sweet sweet = new Sweet();
         sweet.setName(dto.getName());
         sweet.setCategory(dto.getCategory());
-        sweet.setDesc(dto.getDescription());
+        sweet.setDescription(dto.getDescription());
         sweet.setPrice(dto.getPrice());
         sweet.setQuantity(dto.getQuantity());
 
@@ -44,7 +44,7 @@ public class SweetService {
         else if(dto.getCategory() != null){
             sweet.setCategory(dto.getCategory());
         } else if (dto.getDescription() != null ) {
-            sweet.setDesc(dto.getDescription());
+            sweet.setDescription(dto.getDescription());
         } else if (dto.getPrice() != null) {
             sweet.setPrice(dto.getPrice());
         } else if (dto.getQuantity() != null) {
@@ -102,7 +102,7 @@ public class SweetService {
         dto.setId(sweet.getId());
         dto.setName(sweet.getName());
         dto.setCategory(sweet.getCategory());
-        dto.setDescription(sweet.getDesc());
+        dto.setDescription(sweet.getDescription());
         dto.setPrice(sweet.getPrice());
         dto.setQuantity(sweet.getQuantity());
         return dto;
