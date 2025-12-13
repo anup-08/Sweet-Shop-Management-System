@@ -7,6 +7,7 @@ import com.SweetShopManagementSystem.exception.NotFound;
 import com.SweetShopManagementSystem.model.User;
 import com.SweetShopManagementSystem.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,6 +17,7 @@ import java.util.List;
 public class UserService {
 
     private final UserRepository userRepo;
+    private final PasswordEncoder passwordEncoder;
 
     public UserResponseDTO registerUser(UserRequestDTO dto) {
 
@@ -24,10 +26,22 @@ public class UserService {
         }
         User user = new User();
         user.setUsername(dto.getUsername());
-        user.setPassword(dto.getPassword());
-        user.setRole(Role.USER); // default role
+        user.setPassword(passwordEncoder.encode(dto.getPassword()));
+        Role role = resolveRole(dto.getRole());
+        user.setRole(role);
 
         return mapToResponse(userRepo.save(user));
+    }
+
+    private Role resolveRole(String roleFromRequest) {
+        if (roleFromRequest == null || roleFromRequest.isBlank()) {
+            return Role.USER;
+        }
+        try {
+            return Role.valueOf(roleFromRequest.toUpperCase());
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Invalid role");
+        }
     }
 
     public List<UserResponseDTO> getAllUsers() {
