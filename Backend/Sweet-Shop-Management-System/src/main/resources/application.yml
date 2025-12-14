@@ -1,21 +1,22 @@
-spring :
-  application :
-   name: Sweet-Shop-Management-System
+spring:
+  application:
+    name: Sweet-Shop-Management-System
 
   datasource:
-     url: ${url}
-     username: ${userName}
-     password: ${password}
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
 
   jpa:
     hibernate:
       ddl-auto: update
     properties:
-      hibernates:
+      hibernate:
         dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: true
 
 server:
-  port: 8080
+  port: ${PORT:8080}
 
 jwt:
-  secret: ${jwtSecret}
+  secret: ${JWT_SECRET}
