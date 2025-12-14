@@ -34,6 +34,7 @@ public class SecurityChain {
 
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
         .authorizeHttpRequests((auth) -> {
+                    auth.requestMatchers(HttpMethod.OPTIONS, "/**").permitAll();
                     auth.requestMatchers("/api/users/login", "/api/users/register", "/api/users/getToken").permitAll();
                     auth.requestMatchers("/api/sweets", "/api/sweets/search", "/api/sweets/images/**").permitAll();
                     auth.requestMatchers("/api/**").authenticated();
@@ -53,14 +54,25 @@ public class SecurityChain {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
+
+        configuration.setAllowedOrigins(List.of(
+                "http://localhost:5173",
+                "https://sweet-shop-management-system-ten-tau.vercel.app"
+        ));
+
+        configuration.setAllowedMethods(List.of(
+                "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"
+        ));
+
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
+
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
+
         return source;
     }
+
 
 
     @Bean
