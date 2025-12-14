@@ -14,6 +14,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @RestController
 @AllArgsConstructor
@@ -22,6 +24,7 @@ public class UserController {
 
     private final UserService service;
     private final AuthenticationManager authenticationManager;
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody UserRequestDTO dto) {
@@ -52,9 +55,13 @@ public class UserController {
     public ResponseEntity<Map<String,String>> getNewJwtToken(@RequestBody Map<String,String> tokenInfo){
 
         String rToken = tokenInfo.get("refreshToken");
-        String newToken = service.generateTokenFromRefreshToken(rToken);
-
-        return ResponseEntity.ok(Map.of("accessToken",newToken));
+        logger.debug("Received refresh token request, refreshToken present={}", rToken != null);
+        try {
+            String newToken = service.generateTokenFromRefreshToken(rToken);
+            return ResponseEntity.ok(Map.of("accessToken",newToken));
+        } catch (Exception ex) {
+            return ResponseEntity.status(401).body(Map.of("error", ex.getMessage()));
+        }
     }
 
     @GetMapping

@@ -25,6 +25,9 @@ public class Sweet {
 
     private Integer quantity;
 
+    // filename of uploaded image (stored in uploads folder)
+    private String image;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "added_by_user_id", nullable = false)
     private User addedBy;

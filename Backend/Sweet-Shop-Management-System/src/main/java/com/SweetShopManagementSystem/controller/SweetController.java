@@ -7,9 +7,13 @@ import com.SweetShopManagementSystem.dtos.UpdateSweetDto;
 import com.SweetShopManagementSystem.service.SweetService;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestPart;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -19,10 +23,11 @@ import java.util.List;
 public class SweetController {
     private final SweetService service;
 
-    @PostMapping
+    @PostMapping( value = "/addSweets" , consumes = MediaType.MULTIPART_FORM_DATA_VALUE )
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SweetResponseDTO> addSweet(@Valid @RequestBody SweetRequestDTO dto) {
-        return ResponseEntity.ok(service.addSweet(dto));
+    public ResponseEntity<SweetResponseDTO> addSweet(@Valid @ModelAttribute SweetRequestDTO dto,
+                                                     @RequestPart(value = "image", required = false) MultipartFile image) {
+        return ResponseEntity.ok(service.addSweet(dto, image));
     }
 
     @GetMapping
@@ -36,11 +41,12 @@ public class SweetController {
         return service.getMyAddedSweets();
     }
 
-
-    @PatchMapping("/{id}")
+    @PostMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<SweetResponseDTO> updateSweet(@PathVariable Long id, @Valid @RequestBody UpdateSweetDto dto) {
-        return ResponseEntity.ok(service.updateSweet(id, dto));
+    public ResponseEntity<SweetResponseDTO> updateSweetPost(@PathVariable Long id,
+                                                            @Valid @ModelAttribute UpdateSweetDto dto,
+                                                            @RequestPart(value = "image", required = false) MultipartFile image) {
+        return ResponseEntity.ok(service.updateSweet(id, dto, image));
     }
 
     @DeleteMapping("/{id}")
@@ -66,6 +72,22 @@ public class SweetController {
     public ResponseEntity<List<SweetResponseDTO>> searchSweets(@RequestParam(required = false) String name, @RequestParam(required = false) String category,
             @RequestParam(required = false) Double minPrice, @RequestParam(required = false) Double maxPrice) {
         return ResponseEntity.ok(service.searchSweets(name, category, minPrice, maxPrice));
+    }
+
+    @GetMapping("/images/{filename:.+}")
+    public ResponseEntity<byte[]> serveImage(@PathVariable String filename) {
+        try {
+            java.nio.file.Path path = java.nio.file.Path.of("uploads").resolve(filename).normalize();
+            if (!java.nio.file.Files.exists(path)) {
+                return ResponseEntity.notFound().build();
+            }
+            byte[] bytes = java.nio.file.Files.readAllBytes(path);
+            String contentType = java.nio.file.Files.probeContentType(path);
+            if (contentType == null) contentType = "application/octet-stream";
+            return ResponseEntity.ok().header("Content-Type", contentType).body(bytes);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 
 }

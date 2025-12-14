@@ -33,8 +33,10 @@ public class SecurityChain {
     public SecurityFilterChain securityFilterChain(HttpSecurity http){
 
         http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .authorizeHttpRequests((response) -> {
-                    response.requestMatchers("/api/**").permitAll();
+        .authorizeHttpRequests((auth) -> {
+                    auth.requestMatchers("/api/users/login", "/api/users/register", "/api/users/getToken").permitAll();
+                    auth.requestMatchers("/api/sweets", "/api/sweets/search", "/api/sweets/images/**").permitAll();
+                    auth.requestMatchers("/api/**").authenticated();
                 })
                 .exceptionHandling((ex) ->{
                     ex.accessDeniedHandler(accessDeniedHandler).authenticationEntryPoint(authEntryPoint);
@@ -52,7 +54,7 @@ public class SecurityChain {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(List.of("http://localhost:5173"));
-        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        configuration.setAllowedMethods(List.of("GET","POST","PUT","PATCH","DELETE","OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

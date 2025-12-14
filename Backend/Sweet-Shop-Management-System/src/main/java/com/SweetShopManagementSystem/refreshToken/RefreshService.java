@@ -21,7 +21,7 @@ public class RefreshService {
 
         RefreshToken refreshToken = new RefreshToken();
         refreshToken.setUserId(userId);
-        refreshToken.setRToken(rToken);
+        refreshToken.setToken(rToken);
         refreshToken.setExpireTime(new Date(System.currentTimeMillis() + 5 * 24 * 60 * 60 * 1000));
 
         repo.save(refreshToken);
@@ -29,7 +29,7 @@ public class RefreshService {
     }
 
     public RefreshToken validate(String rToken){
-        RefreshToken refreshToken = repo.findByRToken(rToken).get();
+        RefreshToken refreshToken = repo.findByToken(rToken).orElseThrow(() -> new IllegalArgumentException("Invalid refresh token"));
         if (refreshToken.getExpireTime().before(new Date())) throw new IllegalArgumentException("Invalid or Token Expired");
         return refreshToken;
     }

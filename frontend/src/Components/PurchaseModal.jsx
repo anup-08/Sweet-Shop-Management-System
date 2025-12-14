@@ -35,9 +35,19 @@ const PurchaseModal = ({ sweet, open, onClose, onConfirm }) => {
           <div className="flex gap-3 mt-2">
             <button
               onClick={() => {
-                const v = Number(document.getElementById("purchase-qty").value || 1);
-                onConfirm(Math.max(1, Math.min(v, sweet.quantity)));
-              }}
+                    const v = Number(document.getElementById("purchase-qty").value || 1);
+
+                    if (v > sweet.quantity) {
+                      alert("Entered quantity is more than available stock");
+                      return;
+                    }
+                
+                    if (v < 1) {
+                      alert("Quantity must be at least 1");
+                      return;
+                    }
+                    onConfirm(v);
+            }}
               className="flex-1 bg-pink-600 hover:bg-pink-700 text-white py-2 rounded-xl font-semibold transition"
             >
               Confirm Purchase

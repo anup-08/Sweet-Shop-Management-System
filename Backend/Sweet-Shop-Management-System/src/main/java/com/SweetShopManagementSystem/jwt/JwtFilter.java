@@ -4,6 +4,8 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import lombok.AllArgsConstructor;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,12 +21,19 @@ import java.util.List;
 @AllArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
     private final JwtUtility jwtUtility;
+    private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String uri = request.getRequestURI();
-
-        if (uri.startsWith("/api/users/register") || uri.startsWith("/api/sweets/search")){
+        // Log minimal auth header info for debugging (do NOT log full tokens in production)
+        String authorizationHeaderTmp = request.getHeader("Authorization");
+        if (authorizationHeaderTmp == null) {
+            logger.debug("No Authorization header for request {}", uri);
+        } else {
+            logger.debug("Authorization header length {} for request {}", authorizationHeaderTmp.length(), uri);
+        }
+        if (uri.startsWith("/api/users/register") || uri.startsWith("/api/sweets/search") || uri.startsWith("/api/users/getToken")){
             filterChain.doFilter(request, response);
             return;
         }
@@ -36,18 +45,27 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if(authorizationHeader != null && authorizationHeader.startsWith("Bearer ")){
             token = authorizationHeader.substring(7);
-            userName = jwtUtility.extractUserName(token);
+            try {
+                userName = jwtUtility.extractUserName(token);
+            } catch (Exception e) {
+                logger.warn("Failed to extract username from token for request {}: {}", uri, e.getMessage());
+                // proceed without setting authentication
+            }
         }
 
         if(userName != null && SecurityContextHolder.getContext().getAuthentication() == null){
-            if(jwtUtility.validateToken(token, userName)){
+            try {
+                if(jwtUtility.validateToken(token, userName)){
 
-                List<String> roles = jwtUtility.extractRoles(token);
-                List<SimpleGrantedAuthority> gAuth = roles.stream().map((role)-> new SimpleGrantedAuthority("ROLE_"+role)).toList();
+                    List<String> roles = jwtUtility.extractRoles(token);
+                    List<SimpleGrantedAuthority> gAuth = roles.stream().map((role)-> new SimpleGrantedAuthority("ROLE_"+role)).toList();
 
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userName, null , gAuth);
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                SecurityContextHolder.getContext().setAuthentication(authToken);
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(userName, null , gAuth);
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                }
+            } catch (Exception e) {
+                logger.warn("Token validation failed for request {}: {}", uri, e.getMessage());
             }
         }
         filterChain.doFilter(request,response);

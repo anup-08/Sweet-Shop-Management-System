@@ -3,10 +3,37 @@ import Navbar from "../Components/Navbar";
 import SweetCard from "../Components/SweetCard";
 import Footer from "../Components/Footer";
 import PurchaseModal from "../Components/PurchaseModal";
-import { getSweets, purchaseSweet, initAuth, isTokenExpired, refreshAccessToken } from "../api";
+import { getSweets, purchaseSweet, initAuth, isTokenExpired, refreshAccessToken, API_URL } from "../api";
 
 function Dashboard() {
-  const [sweets, setSweets] = useState([]);
+  const initialDummy = [
+    {
+      id: "sample-1",
+      name: "Chocolate Barfi",
+      price: 250,
+      image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c",
+      description: "Rich chocolate-flavored barfi, made with premium cocoa and cashews.",
+      quantity: 12,
+    },
+    {
+      id: "sample-2",
+      name: "Rasgulla",
+      price: 180,
+      image: "https://images.unsplash.com/photo-1627308595229-7830a5c91f9f",
+      description: "Soft, spongy syrupy delights topped with pistachio crumbs.",
+      quantity: 20,
+    },
+    {
+      id: "sample-3",
+      name: "Kaju Katli",
+      price: 420,
+      image: "https://images.unsplash.com/photo-1699708263762-00ca477760bd?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8a2FqdSUyMGthdGxpfGVufDB8fDB8fHww",
+      description: "Silky smooth cashew fudge with a delicate silver finish.",
+      quantity: 8,
+    },
+  ];
+
+  const [sweets, setSweets] = useState(initialDummy);
   const [modalOpen, setModalOpen] = useState(false);
   const [selectedSweet, setSelectedSweet] = useState(null);
 
@@ -15,34 +42,25 @@ function Dashboard() {
     (async () => {
       try {
         const data = await getSweets();
-        if (data && data.length > 0) setSweets(data);
-        else
-          setSweets([
-            {
-              id: "sample-1",
-              name: "Chocolate Barfi",
-              price: 250,
-              image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c",
-              description: "Rich chocolate-flavored barfi, made with premium cocoa and cashews.",
-              quantity: 12,
-            },
-            {
-              id: "sample-2",
-              name: "Rasgulla",
-              price: 180,
-              image: "https://images.unsplash.com/photo-1627308595229-7830a5c91f9f",
-              description: "Soft, spongy syrupy delights topped with pistachio crumbs.",
-              quantity: 20,
-            },
-            {
-              id: "sample-3",
-              name: "Kaju Katli",
-              price: 420,
-              image: "https://images.unsplash.com/photo-1699708263762-00ca477760bd?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8a2FqdSUyMGthdGxpfGVufDB8fDB8fHww",
-              description: "Silky smooth cashew fudge with a delicate silver finish.",
-              quantity: 8,
-            },
-          ]);
+        const mapped = (data || []).map((s) => ({
+          id: s.id,
+          name: s.name,
+          price: s.price,
+          image: s.image && !s.image.startsWith("http") ? `${API_URL}/api/sweets/images/${s.image}` : s.image || "",
+          description: s.description,
+          quantity: s.quantity ?? 0,
+        }));
+
+        // merge with dummy while avoiding duplicates
+        const merged = [...initialDummy];
+        const existing = new Set(merged.map((d) => String(d.id)));
+        for (const m of mapped) {
+          if (!existing.has(String(m.id))) {
+            merged.push(m);
+            existing.add(String(m.id));
+          }
+        }
+        setSweets(merged);
       } catch (err) {
         console.error("Failed to load sweets:", err);
       }

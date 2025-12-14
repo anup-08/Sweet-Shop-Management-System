@@ -21,7 +21,7 @@ public class RefreshToken {
     private Long userId;
 
     @Column(name = "refresh_token")
-    private String rToken;
+    private String token;
 
     @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "expire_time")

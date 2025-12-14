@@ -11,8 +11,14 @@ import com.SweetShopManagementSystem.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -20,7 +26,7 @@ public class SweetService {
     private final SweetRepository sweetRepo;
     private final UserRepository userRepository;
 
-    public SweetResponseDTO addSweet(SweetRequestDTO dto){
+    public SweetResponseDTO addSweet(SweetRequestDTO dto, MultipartFile image){
         String username = getCurrentUsername();
         User admin = userRepository.findByUsername(username).orElseThrow(() -> new NotFound("User not found"));
 
@@ -29,6 +35,24 @@ public class SweetService {
         sweet.setCategory(dto.getCategory());
         sweet.setDescription(dto.getDescription());
         sweet.setPrice(dto.getPrice());
+        if (image != null && !image.isEmpty()) {
+            try {
+                // ensure uploads directory exists
+                Path uploadsDir = Path.of("uploads");
+                if (!Files.exists(uploadsDir)) Files.createDirectories(uploadsDir);
+                String ext = "";
+                String original = image.getOriginalFilename();
+                if (original != null && original.contains(".")) {
+                    ext = original.substring(original.lastIndexOf('.'));
+                }
+                String filename = UUID.randomUUID().toString() + ext;
+                Path target = uploadsDir.resolve(filename);
+                Files.copy(image.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+                sweet.setImage(filename);
+            } catch (IOException e) {
+                throw new RuntimeException("Failed to save uploaded image", e);
+            }
+        }
         sweet.setQuantity(dto.getQuantity());
         sweet.setAddedBy(admin);
 
@@ -62,21 +86,46 @@ public class SweetService {
                 .toList();
     }
 
-    public SweetResponseDTO updateSweet(Long id, UpdateSweetDto dto) {
+    public SweetResponseDTO updateSweet(Long id, UpdateSweetDto dto, MultipartFile image) {
 
         Sweet sweet = sweetRepo.findById(id).orElseThrow(() -> new NotFound("Sweet not found"));
 
-        if(dto.getName() != null) {
+        if (dto.getName() != null && !dto.getName().isBlank()) {
             sweet.setName(dto.getName());
         }
-        else if(dto.getCategory() != null){
+
+        if (dto.getCategory() != null && !dto.getCategory().isBlank()) {
             sweet.setCategory(dto.getCategory());
-        } else if (dto.getDescription() != null ) {
+        }
+
+        if (dto.getDescription() != null && !dto.getDescription().isBlank()) {
             sweet.setDescription(dto.getDescription());
-        } else if (dto.getPrice() != null) {
+        }
+
+        if (dto.getPrice() != null) {
             sweet.setPrice(dto.getPrice());
-        } else if (dto.getQuantity() != null) {
+        }
+
+        if (dto.getQuantity() != null) {
             sweet.setQuantity(dto.getQuantity());
+        }
+        // handle uploaded image if present
+        if (image != null && !image.isEmpty()) {
+            try {
+                Path uploadsDir = Path.of("uploads");
+                if (!Files.exists(uploadsDir)) Files.createDirectories(uploadsDir);
+                String ext = "";
+                String original = image.getOriginalFilename();
+                if (original != null && original.contains(".")) {
+                    ext = original.substring(original.lastIndexOf('.'));
+                }
+                String filename = UUID.randomUUID().toString() + ext;
+                Path target = uploadsDir.resolve(filename);
+                Files.copy(image.getInputStream(), target, StandardCopyOption.REPLACE_EXISTING);
+                sweet.setImage(filename);
+            } catch (IOException e) {
+                throw new IllegalArgumentException("Failed to save uploaded image", e);
+            }
         }
         return mapToResponse(sweetRepo.save(sweet));
     }
@@ -133,6 +182,10 @@ public class SweetService {
         dto.setDescription(sweet.getDescription());
         dto.setPrice(sweet.getPrice());
         dto.setQuantity(sweet.getQuantity());
+        if (sweet.getImage() != null && !sweet.getImage().isBlank()) {
+            // return filename only; frontend will build the full URL
+            dto.setImage(sweet.getImage());
+        }
         return dto;
     }
 }
