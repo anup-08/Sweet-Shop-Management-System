@@ -3,6 +3,9 @@ package com.SweetShopManagementSystem.security;
 import com.SweetShopManagementSystem.exception.AuthEntryPoint;
 import com.SweetShopManagementSystem.jwt.JwtFilter;
 import lombok.AllArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -26,7 +29,8 @@ public class SecurityChain {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http){
 
-        http.authorizeHttpRequests((response) -> {
+        http.cors(cors -> cors.configurationSource(corsConfigurationSource()))
+        .authorizeHttpRequests((response) -> {
                     response.requestMatchers("/api/**").permitAll();
                 })
                 .exceptionHandling((ex) ->{
@@ -40,6 +44,19 @@ public class SecurityChain {
 
         return http.build();
     }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedMethods(List.of("GET","POST","PUT","DELETE","OPTIONS"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
+
 
     @Bean
     public PasswordEncoder passwordEncoder(){
