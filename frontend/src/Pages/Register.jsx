@@ -12,7 +12,8 @@ const Register = () => {
     (async () => {
       try {
         await register({ username, password, role });
-        navigate("/dashboard");
+        if (role === "admin") navigate("/admin");
+        else navigate("/dashboard");
       } catch (err) {
         console.error(err);
         alert("Registration failed — check the server or input values.");

@@ -2,32 +2,118 @@ import React, { useEffect, useState } from "react";
 import Navbar from "../Components/Navbar";
 import SweetCard from "../Components/SweetCard";
 import Footer from "../Components/Footer";
-import { getSweets, purchaseSweet, initAuth } from "../api";
+import PurchaseModal from "../Components/PurchaseModal";
+import { getSweets, purchaseSweet, initAuth, isTokenExpired, refreshAccessToken } from "../api";
 
 function Dashboard() {
   const [sweets, setSweets] = useState([]);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedSweet, setSelectedSweet] = useState(null);
 
   useEffect(() => {
     initAuth();
     (async () => {
       try {
         const data = await getSweets();
-        setSweets(data);
+        if (data && data.length > 0) setSweets(data);
+        else
+          setSweets([
+            {
+              id: "sample-1",
+              name: "Chocolate Barfi",
+              price: 250,
+              image: "https://images.unsplash.com/photo-1606313564200-e75d5e30476c",
+              description: "Rich chocolate-flavored barfi, made with premium cocoa and cashews.",
+              quantity: 12,
+            },
+            {
+              id: "sample-2",
+              name: "Rasgulla",
+              price: 180,
+              image: "https://images.unsplash.com/photo-1627308595229-7830a5c91f9f",
+              description: "Soft, spongy syrupy delights topped with pistachio crumbs.",
+              quantity: 20,
+            },
+            {
+              id: "sample-3",
+              name: "Kaju Katli",
+              price: 420,
+              image: "https://images.unsplash.com/photo-1699708263762-00ca477760bd?w=500&auto=format&fit=crop&q=60&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxzZWFyY2h8Mnx8a2FqdSUyMGthdGxpfGVufDB8fDB8fHww",
+              description: "Silky smooth cashew fudge with a delicate silver finish.",
+              quantity: 8,
+            },
+          ]);
       } catch (err) {
         console.error("Failed to load sweets:", err);
       }
     })();
   }, []);
 
-  const handlePurchase = async (id) => {
+  const handlePurchaseConfirm = async (id, qty) => {
+    // client-side validation: ensure requested qty does not exceed available stock
+    const s = sweets.find((x) => x.id === id) || selectedSweet;
+    if (!s) {
+      alert("Selected sweet not found.");
+      return;
+    }
+    if (qty > s.quantity) {
+      alert("Not enough quantity in stock to make this purchase.");
+      return;
+    }
+
+    // ensure user is authenticated and token is fresh; try to refresh if expired
+    const token = localStorage.getItem("accessToken");
+    if (!token) {
+      alert("You must be logged in to make a purchase. Please login.");
+      return;
+    }
+    if (isTokenExpired(token)) {
+      try {
+        await refreshAccessToken();
+      } catch (err) {
+        console.error("Refresh failed:", err);
+        alert("Session expired — please login again.");
+        return;
+      }
+    }
+
     try {
-      const updated = await purchaseSweet(id, 1);
+      const updated = await purchaseSweet(id, qty);
       setSweets((prev) => prev.map((s) => (s.id === updated.id ? updated : s)));
-      alert("Purchase successful");
+      setModalOpen(false);
+      alert("Purchase confirmed — thank you!");
     } catch (err) {
       console.error(err);
-      alert("Purchase failed — ensure you're logged in and have sufficient quantity.");
+      
+      if (err?.response) {
+        const status = err.response.status;
+        const data = err.response.data;
+        if (status === 401) {
+          alert("You must be logged in to make a purchase. Please login.");
+          return;
+        }
+        
+        if (typeof data === "string") {
+          alert(data);
+          return;
+        }
+        if (data && data.message) {
+          alert(data.message);
+          return;
+        }
+      }
+      alert("Purchase failed — please try again.");
     }
+  };
+
+  const openPurchaseModal = (sweet) => {
+    setSelectedSweet(sweet);
+    setModalOpen(true);
+  };
+
+  const closePurchaseModal = () => {
+    setModalOpen(false);
+    setSelectedSweet(null);
   };
 
   return (
@@ -46,14 +132,21 @@ function Dashboard() {
               image={sweet.image}
               name={sweet.name}
               price={sweet.price}
+              description={sweet.description}
               quantity={sweet.quantity}
-              onPurchase={() => handlePurchase(sweet.id)}
+              onPurchase={() => openPurchaseModal(sweet)}
             />
           ))}
         </div>
       </div>
 
       <Footer />
+      <PurchaseModal
+        sweet={selectedSweet}
+        open={modalOpen}
+        onClose={closePurchaseModal}
+        onConfirm={(qty) => selectedSweet && handlePurchaseConfirm(selectedSweet.id, qty)}
+      />
     </div>
   );
 }

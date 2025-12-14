@@ -1,7 +1,7 @@
 import React from "react";
 import { ShoppingCart } from "lucide-react";
 
-const SweetCard = ({ image, name, price, quantity = 0, onPurchase }) => {
+const SweetCard = ({ image, name, price, quantity = 0, description = "", onPurchase }) => {
   return (
     <div className="bg-[#161a20] text-white rounded-2xl shadow-lg overflow-hidden hover:shadow-pink-500/20 transition duration-300 w-full max-w-sm mx-auto">
       
@@ -18,7 +18,11 @@ const SweetCard = ({ image, name, price, quantity = 0, onPurchase }) => {
           {name}
         </h2>
 
+        <p className="text-sm text-gray-300 truncate">{description}</p>
+
         <p className="text-pink-400 font-bold text-base">₹{price}</p>
+
+        <p className="text-xs text-gray-400">Quantity left: {quantity}</p>
 
         <div className="flex items-center gap-2 mt-2">
           <button

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { login } from "../api";
+import { login, getCurrentUser } from "../api";
 
 const Login = () => {
 
@@ -14,7 +14,11 @@ const Login = () => {
     (async () => {
       try {
         await login(username, password);
-        navigate("/dashboard");
+        const current = getCurrentUser();
+        const roles = (current && current.roles) || [];
+        const isAdmin = roles.some((r) => String(r).toUpperCase().includes("ADMIN"));
+        if (isAdmin) navigate("/admin");
+        else navigate("/dashboard");
       } catch (err) {
         console.error(err);
         alert("Login failed — check credentials or server connection.");
