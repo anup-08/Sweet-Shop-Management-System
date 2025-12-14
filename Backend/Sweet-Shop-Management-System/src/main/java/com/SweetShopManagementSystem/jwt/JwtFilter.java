@@ -24,6 +24,11 @@ public class JwtFilter extends OncePerRequestFilter {
     private static final Logger logger = LoggerFactory.getLogger(JwtFilter.class);
 
     @Override
+    protected boolean shouldNotFilter(HttpServletRequest request) {
+        return "OPTIONS".equalsIgnoreCase(request.getMethod());
+    }
+
+    @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         String uri = request.getRequestURI();
         // Log minimal auth header info for debugging (do NOT log full tokens in production)
