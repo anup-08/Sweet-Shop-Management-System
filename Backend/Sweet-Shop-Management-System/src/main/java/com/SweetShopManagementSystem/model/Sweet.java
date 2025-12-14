@@ -24,4 +24,8 @@ public class Sweet {
     private String description;
 
     private Integer quantity;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "added_by_user_id", nullable = false)
+    private User addedBy;
 }

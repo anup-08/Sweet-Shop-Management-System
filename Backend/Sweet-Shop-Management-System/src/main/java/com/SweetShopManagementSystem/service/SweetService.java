@@ -5,8 +5,11 @@ import com.SweetShopManagementSystem.dtos.SweetResponseDTO;
 import com.SweetShopManagementSystem.dtos.UpdateSweetDto;
 import com.SweetShopManagementSystem.exception.NotFound;
 import com.SweetShopManagementSystem.model.Sweet;
+import com.SweetShopManagementSystem.model.User;
 import com.SweetShopManagementSystem.repository.SweetRepository;
+import com.SweetShopManagementSystem.repository.UserRepository;
 import lombok.AllArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -15,20 +18,45 @@ import java.util.List;
 @AllArgsConstructor
 public class SweetService {
     private final SweetRepository sweetRepo;
+    private final UserRepository userRepository;
 
     public SweetResponseDTO addSweet(SweetRequestDTO dto){
+        String username = getCurrentUsername();
+        User admin = userRepository.findByUsername(username).orElseThrow(() -> new NotFound("User not found"));
+
         Sweet sweet = new Sweet();
         sweet.setName(dto.getName());
         sweet.setCategory(dto.getCategory());
         sweet.setDescription(dto.getDescription());
         sweet.setPrice(dto.getPrice());
         sweet.setQuantity(dto.getQuantity());
+        sweet.setAddedBy(admin);
 
         return mapToResponse(sweetRepo.save(sweet));
     }
+    private String getCurrentUsername() {
+        return SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+    }
+
 
     public List<SweetResponseDTO> getAllSweets() {
         return sweetRepo.findAll()
+                .stream()
+                .map(this::mapToResponse)
+                .toList();
+    }
+
+    public List<SweetResponseDTO> getMyAddedSweets() {
+
+        String username = getCurrentUsername();
+
+        User admin = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        return sweetRepo.findByAddedBy(admin)
                 .stream()
                 .map(this::mapToResponse)
                 .toList();

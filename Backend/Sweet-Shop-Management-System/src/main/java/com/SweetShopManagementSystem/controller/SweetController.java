@@ -30,6 +30,13 @@ public class SweetController {
         return ResponseEntity.ok(service.getAllSweets());
     }
 
+    @GetMapping("/my-sweets")
+    @PreAuthorize("hasRole('ADMIN')")
+    public List<SweetResponseDTO> getMySweets() {
+        return service.getMyAddedSweets();
+    }
+
+
     @PatchMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SweetResponseDTO> updateSweet(@PathVariable Long id, @Valid @RequestBody UpdateSweetDto dto) {
