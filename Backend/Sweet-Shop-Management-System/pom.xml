@@ -9,7 +9,8 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.example</groupId>
-	<artifactId>Sweet-Shop-Management-System</artifactId>
+    <packaging>jar</packaging>
+    <artifactId>Sweet-Shop-Management-System</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>Sweet-Shop-Management-System</name>
 	<description>project for Spring Boot</description>
@@ -111,6 +112,10 @@
 					</annotationProcessorPaths>
 				</configuration>
 			</plugin>
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
